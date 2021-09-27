@@ -1,4 +1,5 @@
-# script modified 2020-01-21 by L. Renaud to show that temporal trends in the fall and spring are not the same 
+# script modified 2020-01-21 by L. Renaud 
+# analyses to reproduce results in Renaud et al. GCB 'Temporal trends in autumn and spring phenology' + supplementary results in Appendix 1
 
 library(plyr)
 library (dplyr)
