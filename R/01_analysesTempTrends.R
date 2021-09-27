@@ -23,23 +23,19 @@ getwd()
 rm(list = ls ())
 
 
-
-# load df ------------------------------------------------------------------
-
-
-
-
 # ggplot custom  ----------------------------------------------------------
 theme_set(theme_bw())
 scale_colour_discrete <- function(...,palette="Set1") {
-  scale_colour_brewer(...,palette=palette)
+    scale_colour_brewer(...,palette=palette)
 }
 scale_colour_orig <- ggplot2::scale_colour_discrete
 scale_fill_discrete <- function(...,palette="Set1") {
-  scale_fill_brewer(...,palette=palette)
+    scale_fill_brewer(...,palette=palette)
 }
 
 
+# load df as .csv ------------------------------------------------------------------
+dat.trend <- read.csv2("data/mine/trends_df.csv")
 
 # create dat.trend.yr for analyses at the annual scale --------------------
 dat.trend.yr <- dat.trend[, c("year", "spring_temp", "fall_temp", "evi_up",  "evi_tm1","birthdate")] %>%
@@ -47,7 +43,7 @@ dat.trend.yr <- dat.trend[, c("year", "spring_temp", "fall_temp", "evi_up",  "ev
     summarise_all(mean)
 
 
-# models of temporal trends  ----------------------------------------------
+# fit models of temporal trends  ----------------------------------------------
 mod.ts.l <- lm(spring_temp~year,data=unique(dat.trend[, c("year", "spring_temp")]) )
 mod.ts.gam <- gam(spring_temp~s(year), gamma = 1.4, data=unique(dat.trend[, c("year", "spring_temp")]) )
 # parametric coefficients : (Intercept)   4.3396     0.3197   13.57 7.87e-10 ***
@@ -191,7 +187,7 @@ g.gd.yr <- ggplot(dat.trend.yr, aes(x=year))+
 
 
 
-# KEEP for SUPP
+# SUPP MAT
 up.l.ci.l=predict(mod.gu.lm2,newdata =data.frame(spring_temp = seq(1.4, 7.5, by=0.1)), se.fit=T)
 up.l.ci=data.frame(spring_temp = seq(1.4, 7.5, by=0.1), y=up.l.ci.l$fit, ci.h=up.l.ci.l$se.fit*1.96+up.l.ci.l$fit, ci.l=-up.l.ci.l$se.fit*1.96+up.l.ci.l$fit)
 
