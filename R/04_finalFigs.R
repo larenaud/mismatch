@@ -156,7 +156,7 @@ FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis,
                                ncol=2, nrow=3,
                                labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
                                align = 'v', rel_widths = c(1,1))
-#ggsave("output/graph/FIG1_multi_revised_20210928.tiff", units="mm", device='tiff', dpi=700)
+# ggsave("output/graph/FIG1_multi_revised_20210928.tiff", units="mm", device='tiff', dpi=300)
 
 
   # Figure 2  ---------------------------------------------------------------
