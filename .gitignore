@@ -32,6 +32,8 @@ vignettes/*.pdf
 /cache/
 *_data/
 /data/
+/graph/ 
+# tiff files are too large
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
