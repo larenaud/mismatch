@@ -149,7 +149,7 @@ FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis,
 #									 nrow = 3, #
 #									 base_aspect_ratio = 1.3) # each individual subplot should have an aspect ratio of 1.3
 
-# saving with minimum 300 dpi in tiff
+# saving with minimum 300 dpi in tiff # MAKE SURE OUTPUT IS OUT OF GIT HISTORY!! 
 FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis, 
                                ncol=2, nrow=3,
                                labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
@@ -157,7 +157,7 @@ FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis,
 # ggsave("output/graph/FIG1_multi_revised_20210928.tiff", units="mm", device='tiff', dpi=300)
 
 
-  # Figure 2  ---------------------------------------------------------------
+# Figure 2  ---------------------------------------------------------------
 rm(list = ls())
 load("Cache/finalDF.RData")
 
@@ -417,6 +417,17 @@ g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
 
 
 
+#ggsave("FIG_S3_gamsBDGU.png", width = 140, height = 140, units = 'mm')
+
+# p=cowplot::plot_grid(g.ts,g.tf,g.bd,  ncol=2, 
+# 										 labels=c("a)", "b)", "c)", "d)"),
+# 										 align = "vh")
+# #cowplot::plot_grid(g.ts.gam, g.tf.gam,, g.bd.yr, g.up.yr, ncol=2, nrow=2,labels=c("a)", "b)", "c)", "d)"), align = 'v')
+# cowplot::plot_grid(g.ts.gam, g.tf.gam,g.gd.yr, g.up.yr, g.bd.yr,  ncol=2, nrow=2,labels=c("a)", "b)", "c)", "d)"), align = 'v')
+# 
+# q = plot_grid(p, g.mis, ncol=1,labels=c("", "e)"), rel_widths = 1)
+
+
 
 # Figure S2 - Density distributions for illustrating mismatch
 
@@ -428,6 +439,37 @@ g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
 # Figure S1 - correlations, detrended 
 # Figure S2 - Drivers of mismatch 
 # Figure S3 - Predicted mismatch based on changes in part date and green-up date 
+
+# predict greenup~spring temp
+mod.gu.gam <- gam(evi_up~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up")]) ) # Woods 
+mod.gu.gam2 <- gam(evi_up~s(spring_temp),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up", "spring_temp")]) ) # Woods 
+mod.gu.lm2 <- lm(evi_up~spring_temp,data=unique(dat.trend[, c("year", "evi_up", "spring_temp")]) ) # Woods 
+
+dat.trend.yr$pred.gu <- predict(mod.gu.gam2, newdata = dat.trend.yr) # this is to make figure 1 version 2
+
+
+# predict bdate ~ fall temp
+mod.bd.gam2 <- gamm4(birthdate~s(fall_temp), random=~(1|mom_id) + (1|year), REML=T, data=dat.trend)
+mod.bd.lmer2 <- lmer(birthdate~fall_temp +(1|mom_id) + (1|year), REML=T, data=dat.trend)
+
+pred=predict(mod.bd.gam2$gam, newdata =dat.trend.yr, se.fit=T)
+dat.trend.yr=dat.trend.yr %>% mutate(pred.bd=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit) 
+
+# make figure S3
+pred.mis=ggplot(dat.trend.yr,aes(y=birthdate,x=evi_up))+
+    geom_point(aes(color=year), alpha = 0.5)+
+    #geom_text(aes(color=year,label=year))+
+    geom_abline(intercept = 0, slope=1, linetype = "dotted")+
+    geom_point(data=dat.trend.yr,aes(x=pred.gu,y=pred.bd,color=year),shape=15, size = 3)+
+    #geom_path(data=dat.trend.yr,aes(x=pred.gu,y=pred.bd,color=year))+
+    scale_y_continuous(limits = c(130, 170)) + 
+    scale_x_continuous(limits = c(130, 170)) +
+    labs(x='Green-up date (Julian day) \n (driven by spring temperature, °C',
+         y='Parturition date \n (driven by conception date, in Julian day)')+
+    coord_equal()
+
+ggsave("output/graph/APPENDIX3_FIG_S3_predictedChanges.png", width = 140, height = 140, units = "mm" )
+
 
 # Appendix 3 --------------------------------------------------------------
 # Table S1 Model selection of neonatal survival

@@ -53,6 +53,8 @@ summary(mod.ts.gam)
 #   edf Ref.df     F p-value
 # s(year)   1      1 2.308   0.149
 
+
+
 # without penalty 
 mod.ts.gam <- gam(spring_temp~s(year), data=unique(dat.trend[, c("year", "spring_temp")]) ) 
 # Estimate Std. Error t value Pr(>|t|)    
@@ -62,6 +64,9 @@ mod.ts.gam <- gam(spring_temp~s(year), data=unique(dat.trend[, c("year", "spring
 summary(mod.ts.gam)
 summary(mod.ts.l) # year: 0.09913    0.06525   1.519    0.149
 round(confint(mod.ts.l),3) # year: -0.040  0.238
+
+
+
 
 # autumn
 mod.tf.l <- lm(fall_temp~year,data=unique(dat.trend[, c("year", "fall_temp")]) )
@@ -82,6 +87,8 @@ summary(mod.tf.gam)
 # param: 4.3023, se: 0.1397,p: 5.62e-15, *** edf 1      1 6.682  0.0207 *
 
 
+
+
 # green-up 
 mod.gu.l <- lm(evi_up~year,data=unique(dat.trend[, c("year", "evi_up")]) )
 mod.gu.gam <- gam(evi_up~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up")]))  
@@ -97,6 +104,18 @@ summary(mod.gu.gam) #s(year)   1      1 5.987  0.0272 *
 round(confint(mod.gu.lm2),3) # spring_temp  -7.844  -3.332
 
 
+
+
+# useful later 
+mod.gu.gam <- gam(evi_up~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up")]) ) # Woods 
+mod.gu.gam2 <- gam(evi_up~s(spring_temp),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up", "spring_temp")]) ) # Woods 
+mod.gu.lm2 <- lm(evi_up~spring_temp,data=unique(dat.trend[, c("year", "evi_up", "spring_temp")]) ) # Woods 
+
+dat.trend.yr$pred.gu <- predict(mod.gu.gam2, newdata = dat.trend.yr) # this is to make figure 1 version 2
+
+
+
+
 # revisions - added brown down
 mod.gd.l <- lm(evi_tm1~year,data=unique(dat.trend[, c("year", "evi_tm1")]) )
 mod.gd.gam <- gam(evi_tm1~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_tm1")]) ) 
@@ -110,11 +129,11 @@ round(confint(mod.gd.l), 3) # year         -0.779    1.024
 summary(mod.gd.gam) #  s(year)   1      1 0.084   0.776
 summary(mod.gd.gam2) # s(year)   1      1 0.084   0.776
 
+
+
 # parturition date 
 mod.bd.gam<- gamm4(birthdate ~ s(year), random=~(1|mom_id), REML=T, data=dat.trend)
 mod.bd.lmer<- lmer(birthdate ~ year + (1|mom_id), data=dat.trend)
-#mod.bd.gam2 <- gamm4(birthdate~s(fall_temp), random=~(1|mom_id) + (1|year), REML=T, data=dat.trend)
-#mod.bd.lmer2 <- lmer(birthdate~fall_temp +(1|mom_id) + (1|year), REML=T, data=dat.trend)
 
 summary(mod.bd.gam$gam) # s(year) 5.898  5.898 7.466 5.33e-07 ***
 summary(mod.bd.lmer) # year          -0.5932     0.2145  -2.765
@@ -124,6 +143,12 @@ round(confint(mod.bd.lmer2),3) #fall_temp    -9.223   0.107
 plot(mod.bd.gam2$gam)
 plot(mod.bd.gam$gam)
 
+# useful later for supp, Appendix 2 Figure S3
+mod.bd.gam2 <- gamm4(birthdate~s(fall_temp), random=~(1|mom_id) + (1|year), REML=T, data=dat.trend)
+mod.bd.lmer2 <- lmer(birthdate~fall_temp +(1|mom_id) + (1|year), REML=T, data=dat.trend)
+
+pred=predict(mod.bd.gam2$gam, newdata =dat.trend.yr, se.fit=T)
+dat.trend.yr=dat.trend.yr %>% mutate(pred.bd=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit) 
 
 
 # mismatch
@@ -137,75 +162,8 @@ summary(mod.mis.l)
 mod.mis.l2 <- lmer(mismatch~year+ (1|mom_id), REML=T, data=dat.trend)
 summary(mod.mis.l2)
 
-pred=predict(mod.mis.gam2$gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
-pred.ci.mismatch=data.frame(year = seq(2001, 2017, by=0.1), y=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit)
 
-
-pred=predict(mod.mis.l, newdata =data.frame(year = seq(2001, 2017, by=0.1)),re.form=NA)
-fun=function(x){predict(x, newdata=data.frame(year=seq(2001, 2017, by=0.1)), re.form=NA)}
-pred=bootMer(mod.mis.l, FUN=fun, nsim = 10)
-
-
-pred.ci.mis=data.frame(year = seq(2001, 2017, by=0.1), 
-                       y=colMeans(pred$t), 
-                       ci.h=apply(pred$t, 2, quantile, 0.025), 
-                       ci.l=apply(pred$t, 2, quantile, 0.975))
-
-
-g.mis <- ggplot(dat.trend, aes(x=year))+
-  geom_point(aes(y=mismatch), alpha =0.2) + 
-  #geom_point(data=dat.trend.yr, aes(y=pred.bd), color="turquoise") +
-  #geom_point(aes(y=pred.gu), colour="turquoise") + #for predeicted gu 
-  geom_path(data = pred.ci.mis, aes(y=y), color="turquoise") +
-  geom_ribbon(data=pred.ci.mis, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2, fill = "turquoise") + 
-  geom_path(data = pred.ci.mismatch, aes(y=y)) +
-  geom_ribbon(data=pred.ci.mismatch, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
-  labs(x="Year", y ="Mismatch \n (number of days)")+ 
-  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
-
-#q = plot_grid(p, g.mis, ncol=1,labels=c("", "e)"), rel_widths = 1)
-
-
-# REVISIONS - ADD TEMPORAL TRENDS IN GUP AND BDOWN
-FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis, 
-									 ncol=2, nrow=3,
-									 labels=c("a)", "b)", "c)", "d)", "e)", 'f)'),
-									 align = 'v', rel_widths = c(1,1))
-
-
-cowplot::save_plot("Graphs/revisions2/FIG1_multi_revised.png", FIG1_multi,
-ncol = 2, #
-nrow = 3, #
-# each individual subplot should have an aspect ratio of 1.3
-base_aspect_ratio = 1.3)
-
-
-#ggsave("FIG_S3_gamsBDGU.png", width = 140, height = 140, units = 'mm')
-
-# p=cowplot::plot_grid(g.ts,g.tf,g.bd,  ncol=2, 
-# 										 labels=c("a)", "b)", "c)", "d)"),
-# 										 align = "vh")
-# #cowplot::plot_grid(g.ts.gam, g.tf.gam,, g.bd.yr, g.up.yr, ncol=2, nrow=2,labels=c("a)", "b)", "c)", "d)"), align = 'v')
-# cowplot::plot_grid(g.ts.gam, g.tf.gam,g.gd.yr, g.up.yr, g.bd.yr,  ncol=2, nrow=2,labels=c("a)", "b)", "c)", "d)"), align = 'v')
-# 
-# q = plot_grid(p, g.mis, ncol=1,labels=c("", "e)"), rel_widths = 1)
-
-
-
-
-# figure of predictions
-pred.mis=ggplot(dat.trend.yr,aes(y=birthdate,x=evi_log_up_jul))+
-  geom_point(aes(color=year), alpha = 0.5)+
-  #geom_text(aes(color=year,label=year))+
-  geom_abline(intercept = 0, slope=1, linetype = "dotted")+
-  geom_point(data=dat.trend.yr,aes(x=pred.gu,y=pred.bd,color=year),shape=15, size = 3)+
-  #geom_path(data=dat.trend.yr,aes(x=pred.gu,y=pred.bd,color=year))+
-  scale_y_continuous(limits = c(130, 170)) + 
-  scale_x_continuous(limits = c(130, 170)) +
-  labs(x='Green-up date (Julian day)',
-       y='Parturition date \n (driven by conception date, in Julian day)')+
-  coord_equal()
-
+# predicted changes in conception and green-up date - correlations --------
 cor.test(dat.trend.yr$pred.gu, dat.trend.yr$pred.bd)
 # Pearson's product-moment correlation
 # 
@@ -221,35 +179,6 @@ cor.test(dat.trend.yr$pred.gu, dat.trend.yr$pred.bd)
 summary(lm(pred.bd~pred.gu,data=dat.trend.yr)) # pred.gu      -0.03104    0.10172  -0.305    0.764  
 confint(lm(pred.bd~pred.gu,data=dat.trend.yr)) # pred.gu      -0.247861   0.1857774
 
-plot_grid(p, pred.mis, ncol=1,labels=c("", "e)"), rel_widths = 1)
-
-#ggsave("Graphs/FIG1_trendsV2.png", width = 140, height = 140, units = "mm" )
-ggsave("Graphs/FIGS_trendsV2.png", width = 140, height = 140, units = "mm")
-
-
-
-# variance in BD ----------------------------------------------------------
-
-
-t2=group_by(dat.trend, year) %>% 
-  summarise(GroupVariance=var(mismatch), 
-            mean=mean(mismatch)) 
-p2=ggplot(t2,aes(x = year, y = GroupVariance)) +
-  geom_point() + geom_path() + geom_point(aes(y=mean), shape=2)
-
-
-
-load("Cache/20210426fitnessData_centeredDetrended.RData")
-
-t3 = group_by(fitness.data, yr) %>% 
-  filter(neonatal=="1") %>% 
-  filter(birthdate<183) %>% 
-  summarise(GroupVariance=var(evi_im), 
-            mean=mean(evi_im)) 
-p3 <- ggplot(t3, aes(x = yr, y = GroupVariance)) +
-  geom_point()+ geom_path() + geom_point(aes(y=mean), shape=2)
-plot_grid(p2, p3, 
-          labels=c("a)", "b)"))
 
 
 
