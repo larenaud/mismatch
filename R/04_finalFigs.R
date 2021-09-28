@@ -144,8 +144,6 @@ FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis,
 															 labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
 															 align = 'v', rel_widths = c(1,1))
 
-
-
 #cowplot::save_plot("output/graph/FIG1_multi_revised_20210928.png", FIG1_multi,
 #									 ncol = 2, #
 #									 nrow = 3, #
