@@ -359,6 +359,7 @@ save_plot("Graphs/revisions2FIG3PanelWeanMass_2.png", plot,
 
 
 # Appendix 1 --------------------------------------------------------------
+
 # Figure S1 gams without penalty for temporal trends 
 mod.ts.gam <- gam(spring_temp~s(year), data=unique(dat.trend[, c("year", "spring_temp")]))
 mod.tf.gam <- gam(fall_temp~s(year),data=unique(dat.trend[, c("year", "fall_temp")]))
@@ -429,7 +430,83 @@ g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
 
 
 
-# Figure S2 - Density distributions for illustrating mismatch
+
+# Figure S2 - Density distributions for illustrating mismatch  --------------------------------------------------
+
+#date <- read.csv2("Data/tidybdates_noneonatal.csv", sep = ",")
+load("cache/20210426fitnessData_centeredDetrended.RData")
+pheno <- read.csv2("data/mine/pheno_ram.csv", sep = ",")
+
+date <- fitness.data[, c("yr", "birthdate", "mismatch")]
+
+colnames(pheno)
+# select columns of interest
+keep <- c("year","evi_log_up_jul")
+data.pheno <- pheno[keep]
+colnames(data.pheno) <- c("year","greenup")
+
+tmp2 <- merge(date, 
+              data.pheno, 
+              by.x = "yr", 
+              by.y = "year")
+colnames(tmp2)
+# melt data to long format 
+colnames(tmp2)
+data.long <- melt(tmp2[, c("yr", "birthdate", "greenup")], id.vars="yr", variable.name="category")
+
+all <- ggplot(tmp2, aes(x = birthdate, fill = category)) +
+    geom_density(fill = "grey", alpha = .6, adjust = 2) +
+    geom_density(data = data.long, aes(x = value), colour = "black", alpha = 0.8, adjust = 2) +
+    scale_x_continuous(limits = c(100, 250), breaks = seq(100, 250,50)) +
+    scale_y_continuous(limits = c(0, 0.075)) +
+    guides(fill = FALSE) + 
+    theme_pander(12) +
+    labs(x= "Julian day", y = "Density")  
+
+all = all + scale_fill_manual(values=c("grey", "#00BA38"))
+
+
+
+#  pos mismatch  SELECT EARLY GREEN-UP < MEAN 
+colnames(tmp2)
+mean(tmp2$greenup, na.rm = T) # 147.5658
+
+tmp3 <- tmp2[tmp2$mismatch>0&tmp2$greenup<147,]
+data.long <- melt(tmp3[, c("yr", "birthdate", "greenup")], id.vars="yr", variable.name="category")
+
+pos <- ggplot(tmp3, aes(x = birthdate, fill = category)) +
+    geom_density(data = tmp3, fill = "grey", alpha = .6,  adjust = 2) +
+    geom_density(data = data.long, aes(x = value), colour = "black", alpha = 0.8,  adjust = 2) +
+    scale_x_continuous(limits = c(100, 250), breaks = seq(100, 250,50)) +
+    scale_y_continuous(limits = c(0, 0.075)) +
+    guides(fill = FALSE) + 
+    theme_pander(12) +
+    labs(x= "Julian day", y = "Density")  
+
+pos=pos + scale_fill_manual(values=c("grey", "#00BA38"))
+
+
+#  neg mismatch 
+colnames(tmp2)
+tmp4 <- tmp2[tmp2$mismatch<0&tmp2$greenup>147,]
+data.long <- melt(tmp4[, c("yr", "birthdate", "greenup")], id.vars="yr", variable.name="category")
+
+neg <- ggplot(tmp4, aes(x = birthdate, fill = category)) +
+    geom_density(data = tmp4, fill = "grey", alpha = .6,  adjust = 2) +
+    geom_density(data = data.long, aes(x = value), colour = "black", alpha = 0.8,  adjust = 2) +
+    scale_x_continuous(limits = c(100, 250), breaks = seq(100, 250,50)) +
+    scale_y_continuous(limits = c(0, 0.075)) +
+    guides(fill = FALSE) + 
+    theme_pander(12) +
+    labs(x= "Julian day", y = "Density")  
+
+neg = neg + scale_fill_manual(values=c("grey", "#00BA38"))
+
+plot_grid(all, pos, neg, ncol=3, nrow=1, labels = c("a)", "b)", "c)"))
+
+#ggsave("Graphs/FIGSrelativeDistributions.png", width = 200, height = 100, units = "mm")
+##ggsave("Graphs/FIG2relativeDistributions.tiff")
+
 
 
 
@@ -468,7 +545,7 @@ pred.mis=ggplot(dat.trend.yr,aes(y=birthdate,x=evi_up))+
          y='Parturition date \n (driven by conception date, in Julian day)')+
     coord_equal()
 
-ggsave("output/graph/APPENDIX3_FIG_S3_predictedChanges.png", width = 140, height = 140, units = "mm" )
+# ggsave("output/graph/APPENDIX3_FIG_S3_predictedChanges.png", width = 140, height = 140, units = "mm" )
 
 
 # Appendix 3 --------------------------------------------------------------
