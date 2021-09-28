@@ -22,16 +22,10 @@ scale_fill_discrete <- function(...,palette="Set1") {
 
 
 # load data ---------------------------------------------------------------
-setwd("/Users/LimoilouARenaud/Documents/Scolarite/PostDocI/Mismatch")
-load("Cache/20210426revisedDf.RData")
-
-dat.trend <- fall.pheno.ind[, 1:8] %>% left_join(spring.pheno.ind)
-#dat.trend$mismatch <- dat.trend$birthdateJJ - dat.trend$evi_log_up_jul
-# REVISIONS ADDED EVI_TM1
-dat.trend.yr <- dat.trend[, c("year", "spring_temp", "fall_temp", "evi_log_up_jul",  "evi_tm1","birthdate")] %>%
-	group_by(year) %>%
-	summarise_all(mean)
-
+dat.trend <- read.csv2("data/mine/trends_data.csv")
+dat.trend.yr <- dat.trend[, c("year", "spring_temp", "fall_temp", "evi_up",  "evi_tm1","birthdate")] %>%
+    group_by(year) %>%
+    summarise_all(mean)
 
 # Figure 1 main ms, panels a-f ---------------------------------------------------------
 mod.ts.l <- lm(spring_temp~year,data=unique(dat.trend[, c("year", "spring_temp")]) )
@@ -39,69 +33,78 @@ mod.tf.l <- lm(fall_temp~year,data=unique(dat.trend[, c("year", "fall_temp")]) )
 
 dat.trend.yr$ts.l=predict(mod.ts.l, data=data.trend.yr)
 dat.trend.yr$tf.l=predict(mod.tf.l, data=data.trend.yr)
+
 tf.l.ci.l=predict(mod.tf.l, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
 tf.l.ci=data.frame(year = seq(2001, 2017, by=0.1), y=tf.l.ci.l$fit, ci.h=tf.l.ci.l$se.fit*1.96+tf.l.ci.l$fit, ci.l=-tf.l.ci.l$se.fit*1.96+tf.l.ci.l$fit)
 
 ts.l.ci.l=predict(mod.ts.l, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
 ts.l.ci=data.frame(year = seq(2001, 2017, by=0.1), y=ts.l.ci.l$fit, ci.h=ts.l.ci.l$se.fit*1.96+ts.l.ci.l$fit, ci.l=-ts.l.ci.l$se.fit*1.96+ts.l.ci.l$fit)
 
-
+# A
 g.ts <- ggplot(dat.trend.yr, aes(x=year))+
-	geom_point(aes(y=spring_temp), alpha=0.3, size =2) + geom_line(aes(y=spring_temp), alpha=0.3)+
+	geom_point(aes(y=spring_temp), alpha =0.4, size =2) + geom_line(aes(y=spring_temp), alpha=0.3)+
 	# geom_path(data = ts.l.ci, aes(y=y), color="black") +
 	#geom_ribbon(data=ts.l.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) + 
 	labs(x="Year", y="Spring temperature \n (°C)")+ 
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-
+# B 
 g.tf <- ggplot(dat.trend.yr, aes(x=year))+
-	geom_point(aes(y=fall_temp), alpha=0.3, size =2) +
+	geom_point(aes(y=fall_temp), alpha =0.4, size =2) +
 	geom_path(data = tf.l.ci, aes(y=y)) +
 	geom_ribbon(data=tf.l.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) + 
 	labs(x="Year", y="Autumn temperature \n (°C)")+ 
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-#cowplot::plot_grid(g.tf, g.ts)
-
-mod.gu.l <- lm(evi_log_up_jul~year,data=unique(dat.trend[, c("year", "evi_log_up_jul")]) )
+# green-up/down
+mod.gu.l <- lm(evi_up~year,data=unique(dat.trend[, c("year", "evi_up")]) )
+dat.trend.yr$gu.l=predict(mod.gu.l, data=data.trend.yr)
 
 up.l.ci.l=predict(mod.gu.l, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
 up.l.ci=data.frame(year = seq(2001, 2017, by=0.1), y=up.l.ci.l$fit, ci.h=up.l.ci.l$se.fit*1.96+up.l.ci.l$fit, ci.l=-up.l.ci.l$se.fit*1.96+up.l.ci.l$fit)
 
+# C
 g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
-	geom_point(aes(y=evi_log_up_jul), alpha=0.3, size =2) +
-	#geom_point(aes(y=pred.gu), colour="turquoise") + #for predeicted gu
+	geom_point(aes(y=evi_up), alpha =0.4, size =2) +
 	geom_path(data = up.l.ci, aes(y=y), color="black") +
 	geom_ribbon(data=up.l.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
-	labs(x="Year",y="Green-up date (Julian day)")+
+	labs(x="Year",y="Green-up date \n (Julian day)")+
 	ylim(123,170)+ 
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-
+# D 
 mod.gd.gam <- gam(evi_tm1~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_tm1")]) ) # Woods 
 do.l.ci.l=predict(mod.gd.gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
 do.l.ci=data.frame(year = seq(2001, 2017, by=0.1), y=do.l.ci.l$fit, ci.h=do.l.ci.l$se.fit*1.96+do.l.ci.l$fit, ci.l=-do.l.ci.l$se.fit*1.96+do.l.ci.l$fit)
 
 g.gd.yr <- ggplot(dat.trend.yr, aes(x=year))+
-	geom_point(aes(y=evi_tm1), alpha=0.3, size =2) + geom_line(aes(y=evi_tm1), alpha=0.3)+
-	#geom_point(aes(y=pred.gu), colour="turquoise") + #for predeicted gu
+	geom_point(aes(y=evi_tm1), alpha =0.4, size =2) + geom_line(aes(y=evi_tm1), alpha=0.3)+
 	#geom_path(data = do.l.ci, aes(y=y), color="black", linetype = "dashed") +
-	#	geom_ribbon(data=do.l.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
+	#geom_ribbon(data=do.l.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
 	labs(x="Year",y="Brown-down date \n (Julian day)")+
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-
+# E 
 mod.bd.gam<- gamm4(birthdate ~ s(year), random=~(1|mom_id), REML=T, data=dat.trend)
 
 pred=predict(mod.bd.gam$gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
 pred.ci=data.frame(year = seq(2001, 2017, by=0.1), y=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit)
 
+# another way to predict from lmer # would have to use pred2 in ggplot
+pred=predict(mod.bd.lmer, newdata =data.frame(year = seq(2001, 2017, by=0.1)),re.form=NA)
+fun=function(x){predict(x, newdata=data.frame(year=seq(2001, 2017, by=0.1)), re.form=NA)}
+pred=bootMer(mod.bd.lmer, FUN=fun, nsim = 1000)
+
+pred2.ci=data.frame(year = seq(2001, 2017, by=0.1),
+                    y=colMeans(pred$t),
+                    ci.h=apply(pred$t, 2, quantile, 0.025),
+                    ci.l=apply(pred$t, 2, quantile, 0.975))
+
+
 g.bd.yr <- ggplot(dat.trend.yr, aes(x=year))+
-	geom_point(aes(y=birthdate), alpha=0.3, size =2) +
-	#=geom_point(data=dat.trend.yr, aes(y=pred.bd), color="turquoise") +
-	#geom_point(aes(y=pred.gu), colour="turquoise") + #for predeicted gu
+	geom_point(aes(y=birthdate), alpha =0.4, size =2) +
 	# geom_path(data = pred2.ci, aes(y=y), linetype = "dotted") +
-	#geom_ribbon(data=pred2.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
+	# geom_ribbon(data=pred2.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
 	geom_path(data = pred.ci, aes(y=y)) +
 	geom_ribbon(data=pred.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
 	ylim(123,175) + 
@@ -109,19 +112,16 @@ g.bd.yr <- ggplot(dat.trend.yr, aes(x=year))+
 			 y='Parturition date \n (Julian day)')+ 
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-# REVISIONS - ADD TEMPORAL TRENDS IN GUP AND BDOWN
-p <- cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,ncol=2, nrow=3,labels=c("a)", "b)", "c)", "d)", "e)"), align = 'v')
-#ggsave("FIG_S3_gamsBDGU.png", width = 140, height = 140, units = 'mm')
 
-# Fig 1f mismatch- both gamm + poly on figure 
+# F mismatch- both gamm + poly on figure 
 mod.mis.gam2 <- gamm4(mismatch~s(year), random=~(1|mom_id), REML=T, data=dat.trend)
 pred=predict(mod.mis.gam2$gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
 pred.ci.mismatch=data.frame(year = seq(2001, 2017, by=0.1), y=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit)
 
-mod.mis.l <- lmer(mismatch~year +I(year^2) + (1|mom_id), REML=T, data=dat.trend)
+mod.mis.l <- lmer(mismatch~year +I(year^2) + (1|mom_id), REML=T, data=dat.trend) # convergence issue
 pred=predict(mod.mis.l, newdata =data.frame(year = seq(2001, 2017, by=0.1)),re.form=NA)
 fun=function(x){predict(x, newdata=data.frame(year=seq(2001, 2017, by=0.1)), re.form=NA)}
-pred=bootMer(mod.mis.l, FUN=fun, nsim = 10)
+pred=bootMer(mod.mis.l, FUN=fun, nsim = 100)
 
 pred.ci.mis=data.frame(year = seq(2001, 2017, by=0.1), 
 											 y=colMeans(pred$t), 
@@ -130,27 +130,36 @@ pred.ci.mis=data.frame(year = seq(2001, 2017, by=0.1),
 
 
 g.mis <- ggplot(dat.trend, aes(x=year))+
-	geom_point(aes(y=mismatch), alpha =0.2) + 
-	geom_path(data = pred.ci.mis, aes(y=y), color="turquoise") +
+	geom_point(aes(y=mismatch), alpha =0.4, size = 2) + 
+	geom_path(data = pred.ci.mis, aes(y=y), color="turquoise", linetype = 'dotted') + # this is the poly term
 	geom_ribbon(data=pred.ci.mis, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2, fill = "turquoise") + 
-	geom_path(data = pred.ci.mismatch, aes(y=y)) +
+	geom_path(data = pred.ci.mismatch, aes(y=y)) + # this is the gamm
 	geom_ribbon(data=pred.ci.mismatch, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
 	labs(x="Year", y ="Mismatch \n (number of days)")+ 
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-# REVISIONS - ADD TEMPORAL TRENDS IN GUP AND BDOWN
+# REVISED
 FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis, 
 															 ncol=2, nrow=3,
-															 labels=c("a)", "b)", "c)", "d)", "e)", 'f)'),
+															 labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
 															 align = 'v', rel_widths = c(1,1))
-#cowplot::save_plot("Graphs/revisions2/FIG1_multi_revised.png", FIG1_multi,
+
+
+
+#cowplot::save_plot("output/graph/FIG1_multi_revised_20210928.png", FIG1_multi,
 #									 ncol = 2, #
 #									 nrow = 3, #
-									 # each individual subplot should have an aspect ratio of 1.3
-#									 base_aspect_ratio = 1.3)
+#									 base_aspect_ratio = 1.3) # each individual subplot should have an aspect ratio of 1.3
+
+# saving with minimum 300 dpi in tiff
+FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis, 
+                               ncol=2, nrow=3,
+                               labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
+                               align = 'v', rel_widths = c(1,1))
+#ggsave("output/graph/FIG1_multi_revised_20210928.tiff", units="mm", device='tiff', dpi=700)
 
 
-# Figure 2  ---------------------------------------------------------------
+  # Figure 2  ---------------------------------------------------------------
 rm(list = ls())
 load("Cache/finalDF.RData")
 
@@ -350,4 +359,141 @@ save_plot("Graphs/revisions2FIG3PanelWeanMass_2.png", plot,
 					base_aspect_ratio = 1
 )
 
+
+# Appendix 1 --------------------------------------------------------------
+# Figure S1 gams without penalty for temporal trends 
+mod.ts.gam <- gam(spring_temp~s(year), data=unique(dat.trend[, c("year", "spring_temp")]))
+mod.tf.gam <- gam(fall_temp~s(year),data=unique(dat.trend[, c("year", "fall_temp")]))
+
+dat.trend.yr$ts.g=predict(mod.ts.gam, data=data.trend.yr)
+dat.trend.yr$tf.g=predict(mod.tf.gam, data=data.trend.yr)
+
+ts.g.ci.l=predict(mod.ts.gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
+ts.g.ci=data.frame(year = seq(2001, 2017, by=0.1), y=ts.g.ci.l$fit, ci.h=ts.g.ci.l$se.fit*1.96+ts.g.ci.l$fit, ci.l=-ts.g.ci.l$se.fit*1.96+ts.g.ci.l$fit)
+
+tf.g.ci.l=predict(mod.tf.gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
+tf.g.ci=data.frame(year = seq(2001, 2017, by=0.1), y=tf.g.ci.l$fit, ci.h=tf.g.ci.l$se.fit*1.96+tf.g.ci.l$fit, ci.l=-tf.g.ci.l$se.fit*1.96+tf.g.ci.l$fit)
+
+# fall panel S1 A
+g.tf.gam <- ggplot(dat.trend.yr, aes(x=year))+
+    geom_point(aes(y=fall_temp), alpha=0.3, size =2) +
+    geom_path(data = tf.g.ci, aes(y=y)) +
+    geom_ribbon(data=tf.g.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) + 
+    labs(x="Year", y="Autumn temperature \n (°C)") + 
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+
+# spring panel S1 B
+g.ts.gam <- ggplot(dat.trend.yr, aes(x=year))+
+    geom_point(aes(y=spring_temp), alpha=0.3, size =2) +
+    geom_path(data = ts.g.ci, aes(y=y), color="black") +
+    geom_ribbon(data=ts.g.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) + 
+    labs(x="Year", y="Spring temperature \n (°C)")+ 
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+cowplot::plot_grid(g.tf.gam, g.ts.gam)
+
+
+# panel S1 C - Parturition date 
+
+
+
+
+
+# panel S1 D - GU
+# gams of GU over time # wihtout penalty
+mod.gu.gam <- gam(evi_up~s(year),data=unique(dat.trend[, c("year", "evi_up")]) ) # Woods 
+summary(mod.gu.gam)#edf Ref.df     F p-value - s(year) 3.133   3.89 2.894  0.0744 
+
+up.g.ci.l=predict(mod.gu.gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
+up.g.ci=data.frame(year = seq(2001, 2017, by=0.1), y=up.g.ci.l$fit, ci.h=up.g.ci.l$se.fit*1.96+up.g.ci.l$fit, ci.l=-up.g.ci.l$se.fit*1.96+up.g.ci.l$fit)
+
+g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
+    geom_point(aes(y=evi_up), alpha=0.3, size =2) +
+    #geom_point(aes(y=pred.gu), colour="turquoise") + #for predeicted gu
+    geom_path(data = up.g.ci, aes(y=y)) +
+    geom_ribbon(data=up.g.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
+    labs(x="Year",y="Green-up date \n (Julian day)")+
+    ylim(123,175)+ 
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+
+
+
+# Figure S2 - Density distributions for illustrating mismatch
+
+
+
+# Appendix 2 --------------------------------------------------------------
+# Table S1 & S2 - Model selection of parturition date  and mismatch
+
+# Figure S1 - correlations, detrended 
+# Figure S2 - Drivers of mismatch 
+# Figure S3 - Predicted mismatch based on changes in part date and green-up date 
+
+# Appendix 3 --------------------------------------------------------------
+# Table S1 Model selection of neonatal survival
+# Table S2 Effect of mass on neonatal survival
+# Table S3 Model selection of lamb weaning mass 
+# Table S4 Effect of mismatch on lamb weaning mass 
+# Table S5 Model selection of lamb overwinter survival 
+# Table S6 Effect of lamb weaning mass on overwinter survival 
+
+
+
+# extras - removed from ms ------------------------------------------------
+# the effect of spring temps on GU
+
+up.l.ci.l=predict(mod.gu.lm2,newdata =data.frame(spring_temp = seq(1.4, 7.5, by=0.1)), se.fit=T)
+up.l.ci=data.frame(spring_temp = seq(1.4, 7.5, by=0.1), y=up.l.ci.l$fit, ci.h=up.l.ci.l$se.fit*1.96+up.l.ci.l$fit, ci.l=-up.l.ci.l$se.fit*1.96+up.l.ci.l$fit)
+
+g.up <- ggplot(dat.trend.yr, aes(x=spring_temp))+
+    geom_point(aes(y=evi_up), alpha=0.3, size =2) +
+    #geom_point(aes(y=pred.gu), colour="turquoise") + #for predeicted gu 
+    geom_path(data = up.l.ci, aes(y=y)) +
+    geom_ribbon(data=up.l.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
+    ylim(120,180) + 
+    labs(x='Spring temperature (°C) ',
+         y='Green-up date \n (Julian day)')+ 
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+# the effect of fall temp on birthdate 
+mod.bd.gam2 <- gamm4(birthdate~s(fall_temp), random=~(1|mom_id) + (1|year), REML=T, data=dat.trend)
+mod.bd.lmer2 <- lmer(birthdate~fall_temp +(1|mom_id) + (1|year), REML=T, data=dat.trend)
+summary(mod.bd.gam2$gam) #s(fall_temp) 1.274  1.274 3.568  0.0762 .
+summary(mod.bd.lmer2) #fall_temp     -4.528      2.355  -1.922
+
+# pred=predict(mod.bd.gam2$gam, newdata =dat.trend.yr, se.fit=T)
+# dat.trend.yr=dat.trend.yr %>% mutate(pred.bd=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit) # this is for fig 1, version 2
+
+pred=predict(mod.bd.gam2$gam, newdata =data.frame(fall_temp = seq(2.75, 5.5, by=0.1)), se.fit=T) # was 2.5 for min
+pred.ci=data.frame(fall_temp = seq(2.75, 5.5, by=0.1), y=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit)
+range(dat.trend$fall_temp)
+
+pred=predict(mod.bd.lmer2, newdata =data.frame(fall_temp = seq(2.88, 5.3, by=0.1)),re.form=NA)
+fun=function(x){predict(x, newdata=data.frame(fall_temp = seq(2.88, 5.3, by=0.1)), re.form=NA)}
+pred=bootMer(mod.bd.lmer2, FUN=fun, nsim = 1000)
+
+pred2.ci=data.frame(fall_temp = seq(2.88, 5.3, by=0.1), 
+                    y=colMeans(pred$t), 
+                    ci.h=apply(pred$t, 2, quantile, 0.025), 
+                    ci.l=apply(pred$t, 2, quantile, 0.975))
+
+
+g.bd <- ggplot(dat.trend, aes(x=fall_temp))+
+    geom_point(aes(y=birthdate), alpha=0.3, size =2) + 
+    geom_path(data = pred2.ci, aes(y=y)) +
+    geom_ribbon(data=pred2.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) + 
+    # geom_path(data = pred.ci, aes(y=y), color="orange") +
+    #geom_ribbon(data=pred.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
+    ylim(120,180) + 
+    labs(x='Autumn temperature (°C) ',
+         y='Parturition date \n (Julian day)')+ 
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+FIGS2_A2= cowplot::plot_grid(g.bd,g.up,
+                             ncol=2,
+                             align = "vh",
+                             labels = c("a)", "b)"),
+                             rel_widths = c(1,1))
 
