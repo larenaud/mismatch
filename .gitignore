@@ -33,6 +33,8 @@ vignettes/*.pdf
 *_data/
 /data/
 /output/
+/docs/
+*_docs/
 
 # Temporary files created by R markdown
 *.utf8.md

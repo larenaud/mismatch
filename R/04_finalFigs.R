@@ -87,7 +87,7 @@ g.gd.yr <- ggplot(dat.trend.yr, aes(x=year))+
 	labs(x="Year",y="Brown-down date \n (Julian day)")+
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-# E 
+# E (same as Appendix 1 S1)
 mod.bd.gam<- gamm4(birthdate ~ s(year), random=~(1|mom_id), REML=T, data=dat.trend)
 
 pred=predict(mod.bd.gam$gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
@@ -104,7 +104,7 @@ pred2.ci=data.frame(year = seq(2001, 2017, by=0.1),
                     ci.l=apply(pred$t, 2, quantile, 0.975))
 
 
-g.bd.yr <- ggplot(dat.trend.yr, aes(x=year))+
+g.bd.yr <- ggplot(dat.trend, aes(x=year))+
 	geom_point(aes(y=birthdate), alpha =0.4, size =2) +
 	# geom_path(data = pred2.ci, aes(y=y), linetype = "dotted") +
 	# geom_ribbon(data=pred2.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
@@ -147,10 +147,10 @@ FIG1_multi= cowplot::plot_grid(g.ts, g.tf, g.up.yr, g.gd.yr, g.bd.yr,g.mis,
 															 labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
 															 align = 'v', rel_widths = c(1,1))
 
-#cowplot::save_plot("output/graph/FIG1_multi_revised_20210928.png", FIG1_multi,
-#									 ncol = 2, #
-#									 nrow = 3, #
-#									 base_aspect_ratio = 1.3) # each individual subplot should have an aspect ratio of 1.3
+# cowplot::save_plot("output/graph/FIG1_multi_revised_20210928.png", FIG1_multi,
+# 								 ncol = 2, #
+# 								 nrow = 3, #
+# 								 base_aspect_ratio = 1.3) # each individual subplot should have an aspect ratio of 1.3
 
 # saving with minimum 300 dpi in tiff # MAKE SURE OUTPUT IS OUT OF GIT HISTORY!! 
 # ggsave("output/graph/FIG1_multi_revised_20210928.tiff", units="mm", device='tiff', dpi=300)
@@ -158,11 +158,11 @@ FIG1_multi= cowplot::plot_grid(g.ts, g.tf, g.up.yr, g.gd.yr, g.bd.yr,g.mis,
 
 # Figure 2  ---------------------------------------------------------------
 rm(list = ls())
-load("Cache/modSel_mismatch.Rdata")
+load("cache/modSel_mismatch.Rdata")
 
 # REVISIONS residuals of spring temp given certain level of green-up
-
 # no difference if take model with linear term for fall_prec 
+library(gamm4)
 
 m10 <- gamm4(mismatch ~ s(spring_temp, k=10) + s(fall_prec, k=10), random = ~ (1|mom_id) + (1|year), data = trends_df)
 summary(m10$gam)
@@ -185,9 +185,9 @@ newdat <- within(newdat, {
 
 # Plot, for example, the predicted outcomes as a function of x1...
 p1 <- ggplot(newdat, aes(x=spring_temp, y=fit)) + 
-	geom_point(data=trends_df, aes(x = spring_temp, y = mismatch), colour = "grey") +
+	geom_point(data=trends_df, aes(x = spring_temp, y = mismatch), alpha =0.4, size = 2) + # uniform
 	geom_line() +
-	geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.4)+ 
+	geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2)+ 
 	ylab("Mismatch (number of days)")+ xlab("Spring temperature (°C)")+
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
@@ -210,9 +210,9 @@ newdat <- within(newdat, {
 
 # Plot, for example, the predicted outcomes as a function of x1...
 p2 <- ggplot(newdat, aes(x=fall_prec, y=fit)) + 
-	geom_point(data=trends_df, aes(x = fall_prec, y = mismatch), colour = "grey") +
+	geom_point(data=trends_df, aes(x = fall_prec, y = mismatch), alpha=0.3, size= 2) +
 	geom_line() +
-	geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.4)+ 
+	geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2)+ 
 	ylab("Mismatch (number of days)")+ xlab("Autumn precipitation (mm)")+
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 p2
@@ -257,11 +257,7 @@ summary(m5$mer)
 
 
 # Figure 3 Lamb weaning mass ----------------------------------------------------------------
-library(partR2)
-wean$m9 <- lmer(weanMass ~ fallMass_tm1_z*(evi_im_z + I(evi_im_z^2)) + evi_pm_z + sex +   (1|mom_id) + (1|yr),data = dat.weaning, REML = T) # buffering hypothesis 
-wean$m10 <-lmer(weanMass ~ fallMass_tm1_z*evi_im_z + evi_pm_z + sex + (1|mom_id) + (1|yr),data = dat.weaning, REML = T) # buffering hypothesis 
-# res <- partR2(wean$m9, partvars = c("fallMass_tm1_z", "evi_im_z", "evi_pm_z", "sex", "fallMass_tm1_z:evi_im_z"), nboot=100)
-# res <- partR2(wean$m3, partvars = c("evi_im_z", "evi_pm_z", "sex"), nboot=300)
+load("cache/modSel_weaning.RData")
 
 summary(wean$m10)
 # mom_id   (Intercept) 1.777    1.333   
@@ -277,22 +273,10 @@ summary(wean$m10)
 # sexmale                   2.0341     0.4116   4.942
 # fallMass_tm1_z:evi_im_z  -0.1446     0.1882  -0.768
 
-t=round(summary(wean$m10)$coef, 3) # 
-t=kable(t) %>%
-	kable_styling(font_size = 10) %>%
-	kable_styling("bordered") %>%
- #save_kable(file = "Graphs/TableS5_weaning_A3.html", self_contained = T)
 
-
-
-MuMIn::r.squaredGLMM(wean$m10) # the first 
-# R2m       R2c
-# 0.4628682 0.7607955
-
-MuMIn::r.squaredGLMM(wean$m9)
-# R2m       R2c
-# [1,] 0.4670302 0.7651987
-
+# rewrite with reml =T 
+m9 <- lmer(weanMass ~ fallMass_tm1_z*(evi_im_z + I(evi_im_z^2)) + evi_pm_z + sex +   (1|mom_id) + (1|year),data = dat.weaning, REML = T) # buffering hypothesis 
+m10 <-lmer(weanMass ~ fallMass_tm1_z*evi_im_z + evi_pm_z + sex + (1|mom_id) + (1|year),data = dat.weaning, REML = T) # buffering hypothesis 
 
 str(dat.weaning)
 newd <- data.frame()
@@ -308,12 +292,9 @@ min(dat.weaning$evi_im_z) #  -1.514306
 max(dat.weaning$evi_im_z) #   3.49751
 sd(dat.weaning$evi_im)
 
-
 myfun <- function(x) predict(x,newdata=newdWM,type="response",re.form=NA) # removed allow.new.levels=T
-
 boo <- bootMer(m10, myfun, 1000, seed = NULL, use.u = FALSE, re.form=NA,
 							 verbose = T)
-
 boo <- data.frame(boo)
 str(boo)
 
@@ -321,10 +302,17 @@ newdWM$predi <- apply(boo, 2, mean) # removed boo$t because not in seq of x anym
 newdWM$max <- apply(boo, 2, function(x) quantile(x, 0.975))
 newdWM$min <- apply(boo, 2, function(x) quantile(x, 0.025))
 
-# # pour 'déscaler'
+# unscale
+
+# to unscale later 
+q.SD.IM<-sd(dat.weaning$evi_im, na.rm = T)
+q.MEAN.IM<-mean(dat.weaning$evi_im, na.rm = T)
+
+q.SD.PM<-sd(dat.weaning$evi_pm, na.rm = T)
+q.MEAN.PM<-mean(dat.weaning$evi_pm, na.rm = T)
 newdWM$evi_im<-(newdWM[,"evi_im_z"]*q.SD.IM) + q.MEAN.IM
 
-# prediction
+# individual mismatch
 IM<- ggplot(newdWM, aes(y=predi, x = evi_im)) +
 	geom_ribbon(aes(ymin = min, ymax = max),  colour=NA, alpha=0.2) + 
 	geom_line(aes(y = predi)) + 
@@ -337,7 +325,6 @@ IM<- ggplot(newdWM, aes(y=predi, x = evi_im)) +
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) 
 
 # population mismatch
-
 str(dat.weaning)
 newd <- data.frame()
 nd <- expand.grid(evi_pm_z=seq(min(dat.weaning$evi_pm_z, na.rm = T), 
@@ -349,7 +336,6 @@ nd <- expand.grid(evi_pm_z=seq(min(dat.weaning$evi_pm_z, na.rm = T),
 newdWM <- rbind(newd,nd)
 
 myfun <- function(x) predict(x,newdata=newdWM,type="response",re.form=NA) # removed allow.new.levels=T
-
 boo <- bootMer(m10, myfun, 1000, seed = NULL, use.u = FALSE, re.form=NA,
 							 verbose = T)
 
@@ -360,7 +346,7 @@ newdWM$predi <- apply(boo, 2, mean) # removed boo$t because not in seq of x anym
 newdWM$max <- apply(boo, 2, function(x) quantile(x, 0.975))
 newdWM$min <- apply(boo, 2, function(x) quantile(x, 0.025))
 
-# # pour 'déscaler'
+# 
 newdWM$evi_pm<-(newdWM[,"evi_pm_z"]*q.SD.PM) + q.MEAN.PM
 
 # prediction
@@ -377,18 +363,19 @@ PM<- ggplot(newdWM, aes(y=predi, x = evi_pm)) +
 
 # panel 
 library(cowplot)
-plot <- plot_grid(IM, PM, labels = c("a)", "b)"), align = 'vh')
+plot <- plot_grid(IM, PM, labels = c("(a)", "(b)"), align = 'vh')
 
-ggsave("Graphs/revisions2/FIG3PanelWeanMass_1.png", width = 150, height = 100, units="mm")
-save_plot("Graphs/revisions2FIG3PanelWeanMass_2.png", plot,
-					ncol = 2, #
-					nrow = 1, #
-					# each individual subplot should have an aspect ratio of 1.3
-					base_aspect_ratio = 1
-)
+# ggsave("output/graph/FIG3_PanelWeanMass_1.png", width = 150, height = 100, units="mm")
+# save_plot("output/graph/revisions2FIG3PanelWeanMass_2.png", plot,
+# 					ncol = 2, #
+# 					nrow = 1, #
+# 					# each individual subplot should have an aspect ratio of 1.3
+# 					base_aspect_ratio = 1
+# )
 
 
 # Appendix 1 --------------------------------------------------------------
+load("cache/models_trends.RData")
 
 # Figure S1 gams without penalty for temporal trends 
 mod.ts.gam <- gam(spring_temp~s(year), data=unique(dat.trend[, c("year", "spring_temp")]))
@@ -405,7 +392,7 @@ tf.g.ci=data.frame(year = seq(2001, 2017, by=0.1), y=tf.g.ci.l$fit, ci.h=tf.g.ci
 
 # fall panel S1 A
 g.tf.gam <- ggplot(dat.trend.yr, aes(x=year))+
-    geom_point(aes(y=fall_temp), alpha=0.3, size =2) +
+    geom_point(aes(y=fall_temp), alpha=0.4, size =2) +
     geom_path(data = tf.g.ci, aes(y=y)) +
     geom_ribbon(data=tf.g.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) + 
     labs(x="Year", y="Autumn temperature \n (°C)") + 
@@ -414,22 +401,15 @@ g.tf.gam <- ggplot(dat.trend.yr, aes(x=year))+
 
 # spring panel S1 B
 g.ts.gam <- ggplot(dat.trend.yr, aes(x=year))+
-    geom_point(aes(y=spring_temp), alpha=0.3, size =2) +
+    geom_point(aes(y=spring_temp), alpha=0.4, size =2) +
     geom_path(data = ts.g.ci, aes(y=y), color="black") +
     geom_ribbon(data=ts.g.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) + 
     labs(x="Year", y="Spring temperature \n (°C)")+ 
     theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-cowplot::plot_grid(g.tf.gam, g.ts.gam)
+# cowplot::plot_grid(g.tf.gam, g.ts.gam)
 
-
-# panel S1 C - Parturition date 
-
-
-
-
-
-# panel S1 D - GU
+# panel S1 C - GU
 # gams of GU over time # wihtout penalty
 mod.gu.gam <- gam(evi_up~s(year),data=unique(dat.trend[, c("year", "evi_up")]) ) # Woods 
 summary(mod.gu.gam)#edf Ref.df     F p-value - s(year) 3.133   3.89 2.894  0.0744 
@@ -438,7 +418,7 @@ up.g.ci.l=predict(mod.gu.gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)
 up.g.ci=data.frame(year = seq(2001, 2017, by=0.1), y=up.g.ci.l$fit, ci.h=up.g.ci.l$se.fit*1.96+up.g.ci.l$fit, ci.l=-up.g.ci.l$se.fit*1.96+up.g.ci.l$fit)
 
 g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
-    geom_point(aes(y=evi_up), alpha=0.3, size =2) +
+    geom_point(aes(y=evi_up), alpha=0.4, size =2) +
     #geom_point(aes(y=pred.gu), colour="turquoise") + #for predeicted gu
     geom_path(data = up.g.ci, aes(y=y)) +
     geom_ribbon(data=up.g.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
@@ -446,18 +426,44 @@ g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
     ylim(123,175)+ 
     theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
+# panel S1 D - Parturition date 
+mod.bd.gam<- gamm4(birthdate ~ s(year), random=~(1|mom_id), REML=T, data=dat.trend)
+
+pred=predict(mod.bd.gam$gam, newdata =data.frame(year = seq(2001, 2017, by=0.1)), se.fit=T)
+pred.ci=data.frame(year = seq(2001, 2017, by=0.1), y=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit)
+
+# another way to predict from lmer # would have to use pred2 in ggplot
+pred=predict(mod.bd.lmer, newdata =data.frame(year = seq(2001, 2017, by=0.1)),re.form=NA)
+fun=function(x){predict(x, newdata=data.frame(year=seq(2001, 2017, by=0.1)), re.form=NA)}
+pred=bootMer(mod.bd.lmer, FUN=fun, nsim = 1000)
+
+pred2.ci=data.frame(year = seq(2001, 2017, by=0.1),
+                    y=colMeans(pred$t),
+                    ci.h=apply(pred$t, 2, quantile, 0.025),
+                    ci.l=apply(pred$t, 2, quantile, 0.975))
 
 
-#ggsave("FIG_S3_gamsBDGU.png", width = 140, height = 140, units = 'mm')
+g.bd.yr <- ggplot(dat.trend, aes(x=year))+
+    geom_point(aes(y=birthdate), alpha =0.3, size =2) +
+    # geom_path(data = pred2.ci, aes(y=y), linetype = "dotted") +
+    # geom_ribbon(data=pred2.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
+    geom_path(data = pred.ci, aes(y=y)) +
+    geom_ribbon(data=pred.ci, aes(ymin = ci.l, ymax = ci.h), alpha = 0.2) +
+    ylim(123,175) + 
+    labs(x='Year ',
+         y='Parturition date \n (Julian day)')+ 
+    theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-# p=cowplot::plot_grid(g.ts,g.tf,g.bd,  ncol=2, 
-# 										 labels=c("a)", "b)", "c)", "d)"),
-# 										 align = "vh")
-# #cowplot::plot_grid(g.ts.gam, g.tf.gam,, g.bd.yr, g.up.yr, ncol=2, nrow=2,labels=c("a)", "b)", "c)", "d)"), align = 'v')
-# cowplot::plot_grid(g.ts.gam, g.tf.gam,g.gd.yr, g.up.yr, g.bd.yr,  ncol=2, nrow=2,labels=c("a)", "b)", "c)", "d)"), align = 'v')
-# 
-# q = plot_grid(p, g.mis, ncol=1,labels=c("", "e)"), rel_widths = 1)
+# REVISED
+FIG_S1_multi= cowplot::plot_grid(g.ts.gam, g.tf.gam, g.up.yr, g.bd.yr,
+                               ncol=2, nrow=2,
+                               labels=c("(a)", "(b)", "(c)", "(d)"),
+                               align = 'v', rel_widths = c(1,1))
 
+# cowplot::save_plot("output/graph/APPENDIX1_FIG_S1_multi_GAM.png", FIG_S1_multi,
+# 								 ncol = 2, #
+# 								 nrow = 2, #
+# 								 base_aspect_ratio = 1.3) # each individual subplot should have an aspect ratio of 1.3
 
 # Figure S2 - Density distributions for illustrating mismatch  --------------------------------------------------
 
@@ -488,12 +494,10 @@ all <- ggplot(tmp2, aes(x = birthdate, fill = category)) +
     scale_x_continuous(limits = c(100, 250), breaks = seq(100, 250,50)) +
     scale_y_continuous(limits = c(0, 0.075)) +
     guides(fill = FALSE) + 
-    theme_pander(12) +
+    ggthemes::theme_pander(12) +
     labs(x= "Julian day", y = "Density")  
 
 all = all + scale_fill_manual(values=c("grey", "#00BA38"))
-
-
 
 #  pos mismatch  SELECT EARLY GREEN-UP < MEAN 
 colnames(tmp2)
@@ -508,11 +512,10 @@ pos <- ggplot(tmp3, aes(x = birthdate, fill = category)) +
     scale_x_continuous(limits = c(100, 250), breaks = seq(100, 250,50)) +
     scale_y_continuous(limits = c(0, 0.075)) +
     guides(fill = FALSE) + 
-    theme_pander(12) +
+    ggthemes::theme_pander(12) +
     labs(x= "Julian day", y = "Density")  
 
 pos=pos + scale_fill_manual(values=c("grey", "#00BA38"))
-
 
 #  neg mismatch 
 colnames(tmp2)
@@ -525,17 +528,15 @@ neg <- ggplot(tmp4, aes(x = birthdate, fill = category)) +
     scale_x_continuous(limits = c(100, 250), breaks = seq(100, 250,50)) +
     scale_y_continuous(limits = c(0, 0.075)) +
     guides(fill = FALSE) + 
-    theme_pander(12) +
+    ggthemes::theme_pander(12) +
     labs(x= "Julian day", y = "Density")  
 
 neg = neg + scale_fill_manual(values=c("grey", "#00BA38"))
-
-plot_grid(all, pos, neg, ncol=3, nrow=1, labels = c("a)", "b)", "c)"))
-
-#ggsave("Graphs/FIGSrelativeDistributions.png", width = 200, height = 100, units = "mm")
-##ggsave("Graphs/FIG2relativeDistributions.tiff")
-
-
+FIG_S2_multi=plot_grid(all, pos, neg, ncol=3, nrow=1, labels = c("(a)", "(b)", "(c)"), align = 'h')
+# cowplot::save_plot("output/graph/APPENDIX1_FIG_S2_mismatchConcept.png", FIG_S2_multi,
+# 								 ncol = 3, #
+# 								 nrow = 1, #
+# 								 base_aspect_ratio = 1)
 
 
 # Appendix 2 --------------------------------------------------------------

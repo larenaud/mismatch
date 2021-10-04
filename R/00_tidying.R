@@ -700,10 +700,17 @@ fitness.data$lamb_id <- droplevels(fitness.data$lamb_id) # 226 levels
 fitness.data$lamb_id <- as.numeric(fitness.data$lamb_id)
 fitness.data$lamb_id  <- as.factor(as.character(fitness.data$lamb_id))
 
+# select needed for analyses only
+colnames(fitness.data)
+fitness.data <- fitness.data[, c("year","mom_id","lamb_id", "neonatal","weanMass","lambSurv_t1","newRS","prs" , "fem",  "fem_tm1",    
+                                 "sex","fallMass_tm1", "birthdate","mismatch","timing","evi_pm","evi_im", 
+                                 "bd_pop","bd_ind","bd.r","bd_ind.r","evi_im.r","weanMass.r","mass_tm1.r",
+                                 "prec_Windowed2","temp_Windowed2")]
+
 # save as csv for Dryad and analyses ------------------------------------
 
 # write.csv2(dat.trend, file = "data/mine/trends_data_noID.csv", row.names = FALSE)
-# write.csv2(fitness.data, file = "data/mine/mismatch_data_noID.csv", row.names = FALSE)
+# write.csv2(fitness.data, file = "data/mine/fitness_data_noID.csv", row.names = FALSE)
 # write.csv2(detrended, file = "data/mine/corDf_detrended.csv", row.names = FALSE)
 
 
