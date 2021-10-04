@@ -511,6 +511,22 @@ plot_grid(all, pos, neg, ncol=3, nrow=1, labels = c("a)", "b)", "c)"))
 # Table S1 & S2 - Model selection of parturition date  and mismatch
 
 # Figure S1 - correlations, detrended 
+detrended_df <- read.csv2("data/mine/corDf_detrended.csv")
+# correlations - remporal trends removed either linear or quad (for 2 var)
+detrended_df %>% ggpairs(columns = c("bd.r","springP.r", "springT.r", "evi_GU.r", "fP.r","fT.r", "fEVI.r"),
+                      upper = list(continuous = wrap('cor', size = 3)),
+                      columnLabels = c("Parturition date","Spring precipitation", "Spring temperature","Green-up","Fall precipitation" , "Fall temperature" , "Green-down"))
+getwd()
+
+#ggsave("Graphs/FIGSpairPlot_detrended20210426.png", width = 11, height = 8.5, units = "in")
+
+# verif 
+cor.test(detrended_df$springP.r,detrended_df$springT.r, method = "pearson")
+cor.test(detrended_df$fEVI.r,detrended_df$springT.r, method = "pearson")
+cor.test(detrended_df$bd.r,detrended_df$fT.r, method = "pearson")
+# end verif 
+
+
 # Figure S2 - Drivers of mismatch 
 # Figure S3 - Predicted mismatch based on changes in part date and green-up date 
 
