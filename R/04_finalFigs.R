@@ -21,11 +21,14 @@ scale_fill_discrete <- function(...,palette="Set1") {
 }
 
 
+# load R object of models -------------------------------------------------
+load("cache/models_trends.RData")
+
 # load data ---------------------------------------------------------------
-dat.trend <- read.csv2("data/mine/trends_data.csv")
-dat.trend.yr <- dat.trend[, c("year", "spring_temp", "fall_temp", "evi_up",  "evi_tm1","birthdate")] %>%
-    group_by(year) %>%
-    summarise_all(mean)
+# dat.trend <- read.csv2("data/mine/trends_data_noID.csv")
+# dat.trend.yr <- dat.trend[, c("year", "spring_temp", "fall_temp", "evi_up",  "evi_tm1","birthdate")] %>%
+#     group_by(year) %>%
+#     summarise_all(mean)
 
 # Figure 1 main ms, panels a-f ---------------------------------------------------------
 mod.ts.l <- lm(spring_temp~year,data=unique(dat.trend[, c("year", "spring_temp")]) )
@@ -139,7 +142,7 @@ g.mis <- ggplot(dat.trend, aes(x=year))+
 	theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 # REVISED
-FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis, 
+FIG1_multi= cowplot::plot_grid(g.ts, g.tf, g.up.yr, g.gd.yr, g.bd.yr,g.mis, 
 															 ncol=2, nrow=3,
 															 labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
 															 align = 'v', rel_widths = c(1,1))
@@ -150,10 +153,6 @@ FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis,
 #									 base_aspect_ratio = 1.3) # each individual subplot should have an aspect ratio of 1.3
 
 # saving with minimum 300 dpi in tiff # MAKE SURE OUTPUT IS OUT OF GIT HISTORY!! 
-FIG1_multi= cowplot::plot_grid(g.ts, g.tf.gam, g.up.yr, g.gd.yr, g.bd.yr,g.mis, 
-                               ncol=2, nrow=3,
-                               labels=c("(a)", "(b)", "(c)", "(d)", "(e)", '(f)'),
-                               align = 'v', rel_widths = c(1,1))
 # ggsave("output/graph/FIG1_multi_revised_20210928.tiff", units="mm", device='tiff', dpi=300)
 
 
@@ -427,8 +426,6 @@ g.up.yr <- ggplot(dat.trend.yr, aes(x=year))+
 # cowplot::plot_grid(g.ts.gam, g.tf.gam,g.gd.yr, g.up.yr, g.bd.yr,  ncol=2, nrow=2,labels=c("a)", "b)", "c)", "d)"), align = 'v')
 # 
 # q = plot_grid(p, g.mis, ncol=1,labels=c("", "e)"), rel_widths = 1)
-
-
 
 
 # Figure S2 - Density distributions for illustrating mismatch  --------------------------------------------------

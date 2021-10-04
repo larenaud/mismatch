@@ -33,15 +33,13 @@ scale_fill_discrete <- function(...,palette="Set1") {
     scale_fill_brewer(...,palette=palette)
 }
 
-
 # load df as .csv ------------------------------------------------------------------
-dat.trend <- read.csv2("data/mine/trends_data.csv")
+dat.trend <- read.csv2("data/mine/trends_data_noID.csv")
 
 # create dat.trend.yr for analyses at the annual scale --------------------
 dat.trend.yr <- dat.trend[, c("year", "spring_temp", "fall_temp", "evi_up",  "evi_tm1","birthdate")] %>%
     group_by(year) %>%
     summarise_all(mean)
-
 
 # fit models of temporal trends  ----------------------------------------------
 # spring 
@@ -53,8 +51,6 @@ summary(mod.ts.gam)
 #   edf Ref.df     F p-value
 # s(year)   1      1 2.308   0.149
 
-
-
 # without penalty 
 mod.ts.gam <- gam(spring_temp~s(year), data=unique(dat.trend[, c("year", "spring_temp")]) ) 
 # Estimate Std. Error t value Pr(>|t|)    
@@ -64,9 +60,6 @@ mod.ts.gam <- gam(spring_temp~s(year), data=unique(dat.trend[, c("year", "spring
 summary(mod.ts.gam)
 summary(mod.ts.l) # year: 0.09913    0.06525   1.519    0.149
 round(confint(mod.ts.l),3) # year: -0.040  0.238
-
-
-
 
 # autumn
 mod.tf.l <- lm(fall_temp~year,data=unique(dat.trend[, c("year", "fall_temp")]) )
@@ -87,8 +80,6 @@ summary(mod.tf.gam)
 # param: 4.3023, se: 0.1397,p: 5.62e-15, *** edf 1      1 6.682  0.0207 *
 
 
-
-
 # green-up 
 mod.gu.l <- lm(evi_up~year,data=unique(dat.trend[, c("year", "evi_up")]) )
 mod.gu.gam <- gam(evi_up~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up")]))  
@@ -98,23 +89,17 @@ mod.gu.gam <- gam(evi_up~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", 
 summary(mod.gu.l) # year          -1.0049     0.4107  -2.447   0.0272 *
 round(confint(mod.gu.l), 3) # year         -1.880   -0.130
 summary(mod.gu.gam) #s(year)   1      1 5.987  0.0272 *
-#summary(mod.gu.gam2) ##s(spring_temp) 1.56  1.934 18.26 0.000225 ***
-#summary(mod.gu.lm2) 
-#spring_temp   -5.588      1.058   -5.28 9.26e-05 ***
-round(confint(mod.gu.lm2),3) # spring_temp  -7.844  -3.332
-
-
-
 
 # useful later 
 mod.gu.gam <- gam(evi_up~s(year),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up")]) ) # Woods 
 mod.gu.gam2 <- gam(evi_up~s(spring_temp),gamma = 1.4, data=unique(dat.trend[, c("year", "evi_up", "spring_temp")]) ) # Woods 
 mod.gu.lm2 <- lm(evi_up~spring_temp,data=unique(dat.trend[, c("year", "evi_up", "spring_temp")]) ) # Woods 
+#summary(mod.gu.gam2) ##s(spring_temp) 1.56  1.934 18.26 0.000225 ***
+#summary(mod.gu.lm2) 
+#spring_temp   -5.588      1.058   -5.28 9.26e-05 ***
+round(confint(mod.gu.lm2),3) # spring_temp  -7.844  -3.332
 
 dat.trend.yr$pred.gu <- predict(mod.gu.gam2, newdata = dat.trend.yr) # this is to make figure 1 version 2
-
-
-
 
 # revisions - added brown down
 mod.gd.l <- lm(evi_tm1~year,data=unique(dat.trend[, c("year", "evi_tm1")]) )
@@ -129,15 +114,12 @@ round(confint(mod.gd.l), 3) # year         -0.779    1.024
 summary(mod.gd.gam) #  s(year)   1      1 0.084   0.776
 summary(mod.gd.gam2) # s(year)   1      1 0.084   0.776
 
-
-
 # parturition date 
 mod.bd.gam<- gamm4(birthdate ~ s(year), random=~(1|mom_id), REML=T, data=dat.trend)
 mod.bd.lmer<- lmer(birthdate ~ year + (1|mom_id), data=dat.trend)
 
 summary(mod.bd.gam$gam) # s(year) 5.898  5.898 7.466 5.33e-07 ***
 summary(mod.bd.lmer) # year          -0.5932     0.2145  -2.765
-round(confint(mod.bd.lmer2),3) #fall_temp    -9.223   0.107
 
 # quick check up
 plot(mod.bd.gam2$gam)
@@ -146,22 +128,27 @@ plot(mod.bd.gam$gam)
 # useful later for supp, Appendix 2 Figure S3
 mod.bd.gam2 <- gamm4(birthdate~s(fall_temp), random=~(1|mom_id) + (1|year), REML=T, data=dat.trend)
 mod.bd.lmer2 <- lmer(birthdate~fall_temp +(1|mom_id) + (1|year), REML=T, data=dat.trend)
+# round(confint(mod.bd.lmer2),3) #fall_temp    -9.223   0.107
 
 pred=predict(mod.bd.gam2$gam, newdata =dat.trend.yr, se.fit=T)
 dat.trend.yr=dat.trend.yr %>% mutate(pred.bd=pred$fit, ci.h=pred$se.fit*1.96+pred$fit, ci.l=-pred$se.fit*1.96+pred$fit) 
-
 
 # mismatch
 mod.mis.gam2 <- gamm4(mismatch~s(year), random=~(1|mom_id), REML=T, data=dat.trend)
 plot(mod.mis.gam2$gam)
 summary(mod.mis.gam2$gam)
+# edf Ref.df     F p-value    
+# s(year) 8.211  8.211 16.31  <2e-16 ***
 
-mod.mis.l <- lmer(mismatch~year +I(year^2) + (1|mom_id), REML=T, data=dat.trend)# convergence issue
+mod.mis.l <- lmer(mismatch~year +I(year^2) + (1|mom_id), REML=T, data=dat.trend)# convergence issue with polynomial term 
 summary(mod.mis.l)
+#     Estimate Std. Error t value
+# (Intercept)  8.848e+05  1.790e+05   4.944
+# year        -8.813e+02  1.781e+02  -4.947
+# I(year^2)    2.195e-01  4.433e-02   4.951
 
 mod.mis.l2 <- lmer(mismatch~year+ (1|mom_id), REML=T, data=dat.trend)
-summary(mod.mis.l2)
-
+summary(mod.mis.l2) # year            0.6073     0.2458   2.471
 
 # predicted changes in conception and green-up date - correlations --------
 cor.test(dat.trend.yr$pred.gu, dat.trend.yr$pred.bd)
@@ -179,6 +166,6 @@ cor.test(dat.trend.yr$pred.gu, dat.trend.yr$pred.bd)
 summary(lm(pred.bd~pred.gu,data=dat.trend.yr)) # pred.gu      -0.03104    0.10172  -0.305    0.764  
 confint(lm(pred.bd~pred.gu,data=dat.trend.yr)) # pred.gu      -0.247861   0.1857774
 
-
-
+# saving model as R object ------------------------------------------------
+# save(list = ls(), file = "cache/models_trends.RData")
 
