@@ -11,12 +11,13 @@
 # install.packages("devtools")
 library("devtools")
 library("lme4")
+library("tidyverse")
 library("glmmADMB")      ## (not on CRAN)
 library("glmmTMB")
 library("MCMCglmm")
 library("blme")
+library("bbmle")     ## AICtab
 library("MASS")          ## for glmmPQL (base R)
-library("nlme")          ## for intervals(), tundra example (base R)
 ## auxiliary
 library("ggplot2")
 ## to squash facets together ...
@@ -28,15 +29,14 @@ library("dotwhisker")
 library("coda")      ## MCMC diagnostics
 library("aods3")     ## overdispersion diagnostics
 library("plotMCMC") ## pretty plots from MCMC fits
-library("bbmle")     ## AICtab
+
 library("pbkrtest")  ## parametric bootstrap
 library("Hmisc")
 ## for general-purpose reshaping and data manipulation:
 library("reshape2")
-library("plyr")
+
 ## for illustrating effects of observation-level variance in binary data:
 library("numDeriv")
-library("dplyr")
 
 sessionInfo()
 packageVersion("bbmle")
@@ -51,7 +51,6 @@ scale_colour_orig <- ggplot2::scale_colour_discrete
 scale_fill_discrete <- function(...,palette="Set1") {
   scale_fill_brewer(...,palette=palette)
 }
-
 
 # clean up 
 rm(list = ls())

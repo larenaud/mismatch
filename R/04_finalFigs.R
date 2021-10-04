@@ -231,140 +231,8 @@ FIG2_mismatch= cowplot::plot_grid(p1,p2,
 # 									 nrow = 1, #
 # 									 base_aspect_ratio = 1)
 
-# # for SCEE - background only 
-# p_spring<- ggplot(newdat, aes(y=fit, x = spring_temp)) +
-#  # geom_ribbon(aes(ymin = min, ymax = max),  fill="white", alpha=0.2) +
-#   #geom_line(aes(y = predi), size=1.2, color = "White") +
-#   geom_point(data=dt4, aes(x = spring_temp, y = mismatch), colour = "transparent") +
-#   ylab("Mismatch (number of days)")+ xlab("Spring temperature (°C)") + 
-#   #scale_y_continuous(limits = c(0, 120),breaks=seq(0, 120,40)) +
-#   #scale_x_continuous(limits = c(-2, 4),breaks=seq(-2, 4,1)) +
-#   # theme_pander(12) +
-#   # theme(legend.title=element_blank(), legend.position = c(0.3, 0.4)) +
-#   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.position = "none", 
-#         axis.text=element_text(size=12, color="white"),
-#         axis.title=element_text(size=14, color="white"),
-#         axis.line = element_line(color="white"),
-#         axis.ticks = element_line(color = "white"),
-#         rect = element_rect(fill = "white"),
-#         panel.grid.major = element_line(color="white"), 
-#         panel.grid.minor = element_line(color="transparent"),
-#         panel.background = element_rect(fill = "transparent",colour = NA),
-#         plot.background = element_rect(fill = "transparent",colour = NA)) 
-# 
-# ggsave(p_spring, filename = "spring_temp_mis_bg.png",  bg = "transparent", width = 150, height = 100, units="mm")
-# 
-# # for SCEE 
-# p_spring<- ggplot(newdat, aes(y=fit, x = spring_temp)) +
-#   geom_point(data=dt4, aes(x = spring_temp, y = mismatch), alpha = .5, colour = "white") +
-#   geom_line(size=1.2, color = "White") +
-#   geom_ribbon(aes(ymin = lower, ymax = upper), fill="white", alpha=0.2)+ 
-#   ylab("Mismatch (number of days)")+ xlab("Spring temperature (°C)") + 
-#   # scale_y_continuous(limits = c(10, 40),breaks=seq(10, 40,10)) +
-#   #scale_x_continuous(limits = c(-2, 4),breaks=seq(-2, 4,1)) +
-#   # theme_pander(12) +
-#   # theme(legend.title=element_blank(), legend.position = c(0.3, 0.4)) +
-#   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.position = "none", 
-#         axis.text=element_text(size=12, color="white"),
-#         axis.title=element_text(size=14, color="white"),
-#         axis.line = element_line(color="white"),
-#         axis.ticks = element_line(color = "white"),
-#         rect = element_rect(fill = "white"),
-#         panel.grid.major = element_line(color="white"), 
-#         panel.grid.minor = element_line(color="transparent"),
-#         panel.background = element_rect(fill = "transparent",colour = NA),
-#         plot.background = element_rect(fill = "transparent",colour = NA)) 
-# 
-# ggsave(p_spring, filename = "spring_temp_mis.png",  bg = "transparent", width = 150, height = 100, units="mm")
-# 
-# # fall -  background only 
-# p_fall<- ggplot(newdat, aes(x=fall_prec, y=fit)) +
-#  # geom_line() +
-#   #geom_ribbon(aes(ymin = lower, ymax = upper), fill="white", alpha=0.2)+ 
-#   geom_point(data=dt4, aes(x = fall_prec, y = mismatch), alpha = 0.2, colour = "transparent") +
-#   ylab("Mismatch (number of days)")+ xlab("Fall precipitation (mm)") +
-# #scale_y_continuous(limits = c(0, 120),breaks=seq(0, 120,40)) +
-#   #scale_x_continuous(limits = c(-2, 4),breaks=seq(-2, 4,1)) +
-#   # theme_pander(12) +
-#   # theme(legend.title=element_blank(), legend.position = c(0.3, 0.4)) +
-#   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.position = "none", 
-#         axis.text=element_text(size=12, color="white"),
-#         axis.title=element_text(size=14, color="white"),
-#         axis.line = element_line(color="white"),
-#         axis.ticks = element_line(color = "white"),
-#         rect = element_rect(fill = "white"),
-#         panel.grid.major = element_line(color="white"), 
-#         panel.grid.minor = element_line(color="transparent"),
-#         panel.background = element_rect(fill = "transparent",colour = NA),
-#         plot.background = element_rect(fill = "transparent",colour = NA)) 
-# 
-# ggsave(p_fall, filename = "fall_prec_mis_bg.png",  bg = "transparent", width = 150, height = 100, units="mm")
-# 
-# p_fall<- ggplot(newdat, aes(x=fall_prec, y=fit)) +
-#   geom_line(size=1.2, color = "White") +
-#   geom_ribbon(aes(ymin = lower, ymax = upper), fill="white", alpha=0.2)+ 
-#   geom_point(data=dt4, aes(x = fall_prec, y = mismatch), alpha = .5, colour = "white") +
-#   ylab("Mismatch (number of days)")+ xlab("Fall precipitation (mm)") +
-#   #scale_y_continuous(limits = c(0, 120),breaks=seq(0, 120,40)) +
-#   #scale_x_continuous(limits = c(-2, 4),breaks=seq(-2, 4,1)) +
-#   # theme_pander(12) +
-#   # theme(legend.title=element_blank(), legend.position = c(0.3, 0.4)) +
-#   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"), legend.position = "none", 
-#         axis.text=element_text(size=12, color="white"),
-#         axis.title=element_text(size=14, color="white"),
-#         axis.line = element_line(color="white"),
-#         axis.ticks = element_line(color = "white"),
-#         rect = element_rect(fill = "white"),
-#         panel.grid.major = element_line(color="white"), 
-#         panel.grid.minor = element_line(color="transparent"),
-#         panel.background = element_rect(fill = "transparent",colour = NA),
-#         plot.background = element_rect(fill = "transparent",colour = NA)) 
-# 
-# ggsave(p_fall, filename = "fall_prec_mis.png",  bg = "transparent", width = 150, height = 100, units="mm")
-
-
-
-# newdat <- data.frame(spring_temp=seq(min(dt4$spring_temp), max(dt4$spring_temp), length = 100), 
-#                      mother_id="A44", 
-#                      year="2010")
-# table(dt4$mother_id)
-# table(dt4$year)
-
-# Getting predicted outcomes for new data
-# # These include the splines but ignore other REs
-# predictions = predict(m5$gam, newdata=newdat, se.fit = TRUE) # previously m1 but too circular... 
-# 
-# # Consolidating new data and predictions
-# newdat = cbind(newdat, predictions)
-# 
-# # If you want CIs 
-# newdat <- within(newdat, {
-#   lower = fit-1.96*se.fit
-#   upper = fit+1.96*se.fit
-# })
-# 
-# # Plot, for example, the predicted outcomes as a function of x1...
-# egplot <- ggplot(newdat, aes(x=spring_temp, y=fit)) + 
-#   geom_point(data=dt4, aes(x = spring_temp, y = mismatch), colour = "grey") +
-#   geom_line() +
-#   geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.4)+ 
-#   ylab("Mismatch (number of days)")+ xlab("Spring temperature (°C)") + 
-#   theme_cowplot()
-# egplot
-# ggsave("Graphs/FIG2_mismatchSpringTemp.png", width = 140, height = 140, units = "mm")
-
-
-
-
-
-
-
-
-
-
-
 # # verification : remove extreme high values  or late birthdate 
-tmp <- dt4 %>%filter(birthdate<180)
+tmp <- trends_df %>%filter(birthdate<180)
 
 tmp <- na.omit(tmp)
 m1 <- gamm4(mismatch ~ s(fall_temp, k=10), random = ~ (1|mom_id) + (1|year), data = tmp)
@@ -381,21 +249,11 @@ AICctab(m1$mer, m2$mer, m3$mer, m4$mer, m5$mer)
 # m4$mer 10.4  6 
 # m1$mer 10.6  6 
 
-
 par(mfrow=c(2,2))
-
 plot(m5$gam, page =1)
 summary(m5$gam) # this is closer to a linear relationship 1.232  1.232 12.03 0.000213 ***
 summary(m5$mer)
-
 # end verification 
-
-
-
-
-
-
-
 
 
 # Figure 3 Lamb weaning mass ----------------------------------------------------------------
