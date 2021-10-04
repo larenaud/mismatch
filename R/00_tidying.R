@@ -248,9 +248,9 @@ dt <- surv_bdate %>%
 plot(evi_pm~yr, data=dt)
 plot(evi_im~yr, data=dt)
 
-# detrend -----------------------------------------------------------------
+# detrending based on lm (grosbois et al. 2008)-----------------------------------------------------------------
 
-# detrending based on lm # ATTENTION SOME ARE ANNUAL VALUES THUS DUPLICATED
+# ATTENTION SOME ARE ANNUAL VALUES THUS DUPLICATED
 
 dt1 = dt %>%
     mutate(bd.r = resid(lm(birthdate~as.numeric(as.character(yr)),na.action = na.exclude)),
@@ -270,12 +270,11 @@ dt2 = dt %>%
               bd_pop = unique(bd_pop)) %>% 
     na.omit() 
 
-
 # detrend 
-evi_pm.r= resid(lm(evi_pm~as.numeric(as.character(yr)),data=dt2)) # this is equivalent to bdate since annual effect is removed - mismatch cancels out 
-fem.r=resid(lm(fem~as.numeric(as.character(yr)),data=dt2)) # this is equivalent to bdate since annual effect is removed - mismatch cancels out 
-fem_tm1.r=resid(lm(fem_tm1~as.numeric(as.character(yr)),data=dt2)) # this is equivalent to bdate since annual effect is removed - mismatch cancels out 
-bd_pop.r=resid(lm(bd_pop~as.numeric(as.character(yr)),data=dt2)) # this is equivalent to bdate since annual effect is removed - mismatch cancels out 
+evi_pm.r= resid(lm(evi_pm~as.numeric(as.character(yr)),data=dt2))
+fem.r=resid(lm(fem~as.numeric(as.character(yr)),data=dt2)) 
+fem_tm1.r=resid(lm(fem_tm1~as.numeric(as.character(yr)),data=dt2)) 
+bd_pop.r=resid(lm(bd_pop~as.numeric(as.character(yr)),data=dt2)) 
 
 dt2 <- cbind(dt2, evi_pm.r, fem.r, fem_tm1.r, bd_pop.r)
 colnames(dt2) <- c( "yr","evi_pm","fem","fem_tm1", "bd_pop", "evi_pm.r","fem.r","fem_tm1.r", "bd_pop.r")
@@ -347,10 +346,9 @@ dt1$mom_id<- droplevels(dt1$mom_id) # n = 69 females
 # print(na.fit)
 
 # load fitness data and parturition date for later --------------------------------------
-load("cache/20210426fitnessData_centeredDetrended.RData")
+#load("cache/20210426fitnessData_centeredDetrended.RData")
 fitness.data$date <- as.Date(fitness.data$date, format = "%Y-%m-%d")
 fitness.data <- fitness.data %>% rename(year = yr)
-
 
 # get weather variables - update data-------------------------------------
 
@@ -558,7 +556,6 @@ detrended.spring.pheno <- spring.pheno.pop %>%
 rm(spring.precip, spring.pheno, spring.temp, rs, s)
 
 # re-extract fall weather based on sliding window ---------------------------------
-
 fitness.data$ym1 <- as.numeric(as.character(fitness.data$year)) - 1 # here fitness.data replaced tidy dates 
 
 fitness.data$prec_open <- paste(fitness.data$ym1, "10-21", sep = "-")
@@ -587,6 +584,10 @@ fitness.data%>%
     group_by(year) %>%
     dplyr::summarise(mean(temp_Windowed2, na.rm =T),
                      mean(prec_Windowed2, na.rm=T)) 
+# year `mean(temp_Windowed2, na.rm = T)` `mean(prec_Windowed2, na.rm = T)`
+# * <dbl>                             <dbl>                             <dbl>
+# 1  2000                              3.55                             1.10 
+# 2  2001                              2.88                             0.492
 
 # do some quick verification and compare to plasticity data here 
 # looks fine
@@ -646,7 +647,18 @@ rm(sims, d,dNA, dt2, dt3, dt4,pheno_ram, precip, temp, tmp1j, curDT, curDT2, Bir
 
 # save(detrended.fall.pheno, detrended.spring.pheno, fall.pheno.pop, fall.pheno.ind, spring.pheno.pop, spring.pheno.ind, fitness.data, 
 # file = "cache/20210426revisedDf.RData")
+# load("cache/20210426revisedDf.RData")
 
+# join fall and spring for figure of correlations 
+colnames(detrended.fall.pheno)
+
+detrended.fall <- detrended.fall.pheno[, c("year", "bd.r","fEVI.r","fP.r","fT.r" )]
+detrended.fall <- na.omit(detrended.fall)
+
+detrended <- detrended.spring.pheno %>% left_join(detrended.fall)
+# rename columns
+colnames(detrended) <- c("year","spring_prec","spring_temp","medBD","evi_up","springP.r","springT.r", 
+                         "evi_GU.r","bd.r","fEVI.r","fP.r","fT.r")
 
 # prepare export for Dryad ------------------------------------------------
 # load("cache/20210426revisedDf.RData") 
@@ -656,7 +668,6 @@ dat.trend <- fall.pheno.ind[, c(1:8)]%>% left_join(spring.pheno.ind)
 dat.trend$mom_id <- droplevels(dat.trend$mom_id) # 75 levels
 
 # REVISIONS ADDED EVI_TM1
-
 # rename columns
 colnames(dat.trend) <- c("year","mom_id","mismatch","birthdate","medBD","fall_prec","fall_temp",  
                          "evi_tm1","spring_prec","spring_temp","evi_up")
@@ -673,7 +684,6 @@ head(dat.trend)
 # 5 2001      5      -10       148 160.5 0.4923077  2.879268     279      1.5056    4.913115    158
 # 6 2001      6        9       167 160.5 0.4923077  2.879268     279      1.5056    4.913115    158
 
-
 fitness.data$mom_id <- droplevels(fitness.data$mom_id) # 80 levels
 fitness.data$mom_id <- as.numeric(fitness.data$mom_id)
 fitness.data$mom_id  <- as.factor(as.character(fitness.data$mom_id))
@@ -686,15 +696,14 @@ head(fitness.data)
 # 5 2000      5        1       NA           0 notWeaned notWeaned <NA> 74.95261     74.70597    1  37        1      45    <NA>       150
 # 6 2000      6        0       NA           0 notWeaned notWeaned <NA> 73.14261     74.43051    1  37        1      45    <NA>       160
 
-
 fitness.data$lamb_id <- droplevels(fitness.data$lamb_id) # 226 levels
 fitness.data$lamb_id <- as.numeric(fitness.data$lamb_id)
 fitness.data$lamb_id  <- as.factor(as.character(fitness.data$lamb_id))
-
 
 # save as csv for Dryad and analyses ------------------------------------
 
 # write.csv2(dat.trend, file = "data/mine/trends_data_noID.csv", row.names = FALSE)
 # write.csv2(fitness.data, file = "data/mine/mismatch_data_noID.csv", row.names = FALSE)
+# write.csv2(detrended, file = "data/mine/corDf_detrended.csv", row.names = FALSE)
 
 
